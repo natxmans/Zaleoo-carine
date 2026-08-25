@@ -43,6 +43,15 @@
         .search-input{width:100%;max-width:420px;padding:10px 16px;border:1.5px solid var(--border);border-radius:50px;font-size:0.85rem;font-family:'DM Sans',sans-serif;margin-bottom:16px;background:var(--white);color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:block;}
         .search-input:focus{outline:none;border-color:var(--sky);}
         .no-results{color:var(--muted);font-size:0.85rem;padding:30px 10px;text-align:center;grid-column:1/-1;}
+        .selection-list{max-height:320px;overflow-y:auto;margin:16px 0;}
+        .sel-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);}
+        .sel-row:last-child{border-bottom:none;}
+        .sel-icon{font-size:1.3rem;flex-shrink:0;}
+        .sel-name{flex:1;font-size:0.85rem;color:var(--text);text-align:left;}
+        .sel-remove{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px 10px;border-radius:50%;transition:all 0.15s;}
+        .sel-remove:hover{background:#fdecec;color:#d33;}
+        .selection-empty{color:var(--muted);font-size:0.85rem;padding:20px 10px;text-align:center;}
+        .footer-links-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
         /* GRILLE */
         .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
@@ -128,7 +137,10 @@
 </div>
 
 <div class="footer-bar">
-    <div class="help-btn" onclick="document.getElementById('modal-aide').classList.add('open')">❓ Comment envoyer ma demande ?</div>
+    <div class="footer-links-row">
+        <div class="help-btn" onclick="document.getElementById('modal-aide').classList.add('open')">❓ Comment envoyer ma demande ?</div>
+        <div class="help-btn" id="selection-link" onclick="openSelectionModal()">🛒 Ma sélection (0)</div>
+    </div>
     <div class="client-inputs">
         <div class="input-wrap"><span class="input-icon">👤</span><input type="text" id="c_name" placeholder="Nom et Prénom"></div>
         <div class="input-wrap"><span class="input-icon">📞</span><input type="tel" id="c_tel" placeholder="Téléphone"></div>
@@ -165,6 +177,17 @@
         <p class="detail-desc" id="detail-desc">Description.</p>
         <button class="modal-close" id="detail-select-btn" onclick="toggleFromModal()">Sélectionner ce produit</button>
         <button class="modal-close-secondary" onclick="closeDetailModal()">Fermer</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-selection" onclick="if(event.target===this)closeSelectionModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-icon">🛒</div>
+            <div class="modal-title">Ma sélection</div>
+        </div>
+        <div class="selection-list" id="selection-list"></div>
+        <button class="modal-close" onclick="closeSelectionModal()">Fermer</button>
     </div>
 </div>
 
@@ -246,6 +269,8 @@
                 if(selection.has(p.nom)){selection.delete(p.nom);card.classList.remove('selected');}
                 else{selection.add(p.nom);card.classList.add('selected');}
                 document.getElementById('badge').innerText=selection.size;
+                saveSelection();
+                updateSelectionLink();
             };
             card.innerHTML='<div class="icon-box">'+p.icon+'</div><div class="card-cat">'+p.cat+'</div><h3>'+p.nom+'</h3><p>'+p.desc+'</p>';
             const detailBtn=document.createElement('button');
@@ -285,8 +310,69 @@
         if(selection.has(detailProduct.nom))selection.delete(detailProduct.nom);
         else selection.add(detailProduct.nom);
         document.getElementById('badge').innerText=selection.size;
+        saveSelection();
+        updateSelectionLink();
         updateDetailSelectBtn();
         renderGrid(activeCat);
+    }
+    function saveSelection(){
+        try{ localStorage.setItem('csam_selection', JSON.stringify(Array.from(selection))); }catch(e){}
+    }
+    function loadSelection(){
+        try{
+            const saved=JSON.parse(localStorage.getItem('csam_selection')||'[]');
+            saved.forEach(function(nom){
+                if(catalogue.some(function(p){return p.nom===nom;}))selection.add(nom);
+            });
+        }catch(e){}
+    }
+    function updateSelectionLink(){
+        const el=document.getElementById('selection-link');
+        if(el)el.textContent='🛒 Ma sélection ('+selection.size+')';
+    }
+    function openSelectionModal(){
+        renderSelectionList();
+        document.getElementById('modal-selection').classList.add('open');
+    }
+    function closeSelectionModal(){
+        document.getElementById('modal-selection').classList.remove('open');
+    }
+    function renderSelectionList(){
+        const c=document.getElementById('selection-list');
+        c.innerHTML='';
+        if(selection.size===0){
+            c.innerHTML='<p class="selection-empty">Aucun produit sélectionné pour l\'instant.</p>';
+            return;
+        }
+        Array.from(selection).forEach(function(nom){
+            const p=catalogue.find(function(x){return x.nom===nom;});
+            const row=document.createElement('div');
+            row.className='sel-row';
+            const iconSpan=document.createElement('span');
+            iconSpan.className='sel-icon';
+            iconSpan.textContent=p?p.icon:'📦';
+            const nameSpan=document.createElement('span');
+            nameSpan.className='sel-name';
+            nameSpan.textContent=nom;
+            const rmBtn=document.createElement('button');
+            rmBtn.type='button';
+            rmBtn.className='sel-remove';
+            rmBtn.textContent='✕';
+            rmBtn.onclick=function(){ removeFromSelection(nom); };
+            row.appendChild(iconSpan);
+            row.appendChild(nameSpan);
+            row.appendChild(rmBtn);
+            c.appendChild(row);
+        });
+    }
+    function removeFromSelection(nom){
+        selection.delete(nom);
+        saveSelection();
+        document.getElementById('badge').innerText=selection.size;
+        updateSelectionLink();
+        renderSelectionList();
+        renderGrid(activeCat);
+        if(detailProduct&&detailProduct.nom===nom)updateDetailSelectBtn();
     }
     document.getElementById('search-input').addEventListener('input',function(e){
         searchQuery=e.target.value;
@@ -304,6 +390,9 @@
         window.location.href='mailto:bordeaux-ouest@zaleoo.com?subject='+encodeURIComponent('Devis C-SAM : '+nom)+'&body='+encodeURIComponent(corps);
         setTimeout(function(){btn.innerHTML='✉️ DEMANDER LE DEVIS <span id="badge">'+selection.size+'</span>';},3000);
     }
+    loadSelection();
+    document.getElementById('badge').innerText=selection.size;
+    updateSelectionLink();
     renderGrid();
 </script>
 </body>
