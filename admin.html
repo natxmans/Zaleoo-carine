@@ -41,6 +41,8 @@
     .stat{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:8px 16px;text-align:center;box-shadow:var(--shadow);}
     .stat b{display:block;font-size:1.2rem;}
     .stat span{font-size:0.7rem;color:var(--muted);}
+    .search-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:0.9rem;font-family:inherit;margin-bottom:12px;background:var(--white);color:var(--text);box-shadow:var(--shadow);}
+    .search-input:focus{outline:none;border-color:var(--sky);}
     .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
     .filter-btn{border:1px solid var(--border);background:var(--white);color:var(--text);padding:7px 14px;border-radius:999px;font-size:0.82rem;cursor:pointer;}
     .filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
@@ -111,6 +113,7 @@
             <div class="stat"><b id="stat-new">0</b><span>NOUVEAUX</span></div>
             <div class="stat"><b id="stat-total">0</b><span>AU CATALOGUE</span></div>
         </div>
+        <input type="text" id="search-input" class="search-input" placeholder="Rechercher un produit...">
         <div class="filters" id="filters"></div>
         <div id="banner-wrap"></div>
         <div id="load-status" style="color:var(--muted);font-size:0.85rem;margin-bottom:10px;"></div>
@@ -153,11 +156,22 @@ var FILE_PATH = "index.html";
 
 var PRODUCTS = [];
 var activeFilter = 'Tous';
+var searchQuery = '';
 
 function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, function(c){
         return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
+}
+
+function normalizeSearch(s){
+    return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function matchesSearch(p){
+    if(!searchQuery) return true;
+    var q = normalizeSearch(searchQuery);
+    return normalizeSearch(p.nom).indexOf(q) !== -1 || normalizeSearch(p.desc).indexOf(q) !== -1;
 }
 
 async function sha256Hex(text){
@@ -191,6 +205,10 @@ document.getElementById('logout-link').addEventListener('click', function(e){
     e.preventDefault();
     sessionStorage.removeItem('zaleoo_admin_ok');
     location.reload();
+});
+document.getElementById('search-input').addEventListener('input', function(e){
+    searchQuery = e.target.value;
+    renderAll();
 });
 
 if(sessionStorage.getItem('zaleoo_admin_ok') === '1'){
@@ -265,9 +283,10 @@ function counts(){
 
 function renderFilters(){
     var el = document.getElementById('filters');
+    var visible = PRODUCTS.filter(matchesSearch);
     var cats = ['Tous'].concat(CATS.map(function(c){ return c[0]; }));
     el.innerHTML = cats.map(function(c){
-        var n = c === 'Tous' ? PRODUCTS.length : PRODUCTS.filter(function(p){ return p.cat === c; }).length;
+        var n = c === 'Tous' ? visible.length : visible.filter(function(p){ return p.cat === c; }).length;
         if(n === 0 && c !== 'Tous') return '';
         return '<button class="filter-btn' + (c===activeFilter?' active':'') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c) + ' (' + n + ')</button>';
     }).join('');
@@ -304,14 +323,19 @@ function renderMain(){
     if(PRODUCTS.length === 0){ main.innerHTML = ''; return; }
     var cats = activeFilter === 'Tous' ? CATS.map(function(c){ return c[0]; }) : [activeFilter];
     var html = '';
+    var shown = 0;
     cats.forEach(function(catName){
         var meta = CATS.filter(function(c){ return c[0] === catName; })[0];
-        var items = PRODUCTS.filter(function(p){ return p.cat === catName; });
+        var items = PRODUCTS.filter(function(p){ return p.cat === catName; }).filter(matchesSearch);
         if(items.length === 0) return;
+        shown += items.length;
         html += '<section class="cat-section"><div class="cat-head"><span>' + (meta?meta[1]:'') + '</span><h2>' + escapeHtml(catName) + '</h2>' +
             '<span class="count">' + items.filter(function(p){return p.checked;}).length + '/' + items.length + ' sur le site</span></div>' +
             '<div class="grid">' + items.map(cardHtml).join('') + '</div></section>';
     });
+    if(shown === 0){
+        html = '<p style="color:var(--muted);font-size:0.9rem;padding:20px 0;">Aucun produit ne correspond à "' + escapeHtml(searchQuery) + '".</p>';
+    }
     main.innerHTML = html;
     main.querySelectorAll('.card').forEach(function(card){
         card.addEventListener('click', function(){ toggle(card.dataset.id); });
