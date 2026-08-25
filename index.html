@@ -40,6 +40,9 @@
         .cat-btn{padding:8px 18px;border-radius:50px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;font-size:0.82rem;color:var(--muted);transition:all 0.2s ease;box-shadow:0 2px 6px rgba(0,0,0,0.04);}
         .cat-btn:hover{border-color:var(--blue);color:var(--blue);}
         .cat-btn.active{background:var(--blue);border-color:var(--blue);color:white;box-shadow:0 4px 12px rgba(41,61,164,0.25);}
+        .search-input{width:100%;max-width:420px;padding:10px 16px;border:1.5px solid var(--border);border-radius:50px;font-size:0.85rem;font-family:'DM Sans',sans-serif;margin-bottom:16px;background:var(--white);color:var(--text);box-shadow:0 2px 6px rgba(0,0,0,0.04);display:block;}
+        .search-input:focus{outline:none;border-color:var(--sky);}
+        .no-results{color:var(--muted);font-size:0.85rem;padding:30px 10px;text-align:center;grid-column:1/-1;}
 
         /* GRILLE */
         .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
@@ -52,6 +55,11 @@
         .card-cat{font-size:0.65rem;color:var(--sky);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
         .card h3{font-size:0.88rem;font-weight:600;color:var(--blue);margin-bottom:6px;min-height:36px;display:flex;align-items:center;justify-content:center;line-height:1.3;}
         .card p{font-size:0.74rem;color:var(--muted);line-height:1.4;}
+        .detail-btn{margin-top:12px;background:var(--bg);border:1px solid var(--border);color:var(--blue);padding:6px 16px;border-radius:50px;font-size:0.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s ease;}
+        .detail-btn:hover{background:var(--sel-bg);border-color:var(--sel-bd);}
+        .detail-cat{font-size:0.68rem;color:var(--sky);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;}
+        .detail-desc{font-size:0.88rem;color:var(--text);line-height:1.65;margin-bottom:4px;text-align:left;}
+        .modal-close-secondary{display:block;width:100%;margin-top:8px;background:none;color:var(--muted);border:none;border-radius:50px;padding:10px;font-weight:500;font-size:0.85rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
 
         /* FOOTER */
         .footer-bar{position:fixed;bottom:0;left:0;width:100%;background:var(--white);padding:12px 20px 14px;box-shadow:0 -4px 30px rgba(41,61,164,0.10);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:9999;border-top:1px solid var(--border);}
@@ -105,6 +113,7 @@
 <div class="main">
     <h1 class="section-title">Catalogue produits</h1>
     <p class="section-sub">Sélectionnez les produits qui vous intéressent, puis envoyez votre demande.</p>
+    <input type="text" id="search-input" class="search-input" placeholder="Rechercher un produit...">
     <div class="categories">
         <button class="cat-btn active" onclick="filterGrid('Tous',this)">Tous</button>
         <button class="cat-btn" onclick="filterGrid('Receveurs',this)">🛁 Receveurs</button>
@@ -141,6 +150,21 @@
         <div class="modal-step"><div class="step-num">4</div><div class="step-text">Envoyez le mail — <strong>Carine vous recontacte</strong> rapidement avec tous les détails et votre devis personnalisé !</div></div>
         <div class="modal-note">⚠️ Si rien ne se passe à l'étape 3, vérifiez qu'Outlook (ou votre messagerie par défaut) est bien installé sur votre ordinateur.</div>
         <button class="modal-close" onclick="document.getElementById('modal-aide').classList.remove('open')">J'ai compris ✓</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-detail" onclick="if(event.target===this)closeDetailModal()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div class="modal-icon" id="detail-icon">🛁</div>
+            <div>
+                <div class="detail-cat" id="detail-cat">Catégorie</div>
+                <div class="modal-title" id="detail-title">Nom du produit</div>
+            </div>
+        </div>
+        <p class="detail-desc" id="detail-desc">Description.</p>
+        <button class="modal-close" id="detail-select-btn" onclick="toggleFromModal()">Sélectionner ce produit</button>
+        <button class="modal-close-secondary" onclick="closeDetailModal()">Fermer</button>
     </div>
 </div>
 
@@ -189,27 +213,85 @@
         {cat:'Receveurs',nom:'MODERNA PN24',desc:'Receveur extra-plat 40mm, enveloppe PMMA + panneaux bois/fibre de verre, PN24, découpable 250mm sur 3 côtés. Blanc ardoise. À partir de 402€.',icon:'🛁'},
     ];
     let selection=new Set();
+    let activeCat='Tous';
+    let searchQuery='';
+    function escapeHtml(s){
+        return String(s).replace(/[&<>"']/g,function(c){
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+        });
+    }
+    function normalizeSearch(s){
+        return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+    }
+    function matchesSearch(p){
+        if(!searchQuery)return true;
+        const q=normalizeSearch(searchQuery);
+        return normalizeSearch(p.nom).indexOf(q)!==-1||normalizeSearch(p.desc).indexOf(q)!==-1;
+    }
     function renderGrid(filter){
-        filter=filter||'Tous';
+        filter=filter||activeCat;
+        activeCat=filter;
         const c=document.getElementById('product-grid');c.innerHTML='';
-        catalogue.forEach(function(p){
-            if(filter==='Tous'||p.cat===filter){
-                const card=document.createElement('div');
-                card.className='card'+(selection.has(p.nom)?' selected':'');
-                card.onclick=function(){
-                    if(selection.has(p.nom)){selection.delete(p.nom);card.classList.remove('selected');}
-                    else{selection.add(p.nom);card.classList.add('selected');}
-                    document.getElementById('badge').innerText=selection.size;
-                };
-                card.innerHTML='<div class="icon-box">'+p.icon+'</div><div class="card-cat">'+p.cat+'</div><h3>'+p.nom+'</h3><p>'+p.desc+'</p>';
-                c.appendChild(card);
-            }
+        const items=catalogue.filter(function(p){
+            return (filter==='Tous'||p.cat===filter)&&matchesSearch(p);
+        });
+        if(items.length===0){
+            c.innerHTML='<p class="no-results">Aucun produit ne correspond à "'+escapeHtml(searchQuery)+'".</p>';
+            return;
+        }
+        items.forEach(function(p){
+            const card=document.createElement('div');
+            card.className='card'+(selection.has(p.nom)?' selected':'');
+            card.onclick=function(){
+                if(selection.has(p.nom)){selection.delete(p.nom);card.classList.remove('selected');}
+                else{selection.add(p.nom);card.classList.add('selected');}
+                document.getElementById('badge').innerText=selection.size;
+            };
+            card.innerHTML='<div class="icon-box">'+p.icon+'</div><div class="card-cat">'+p.cat+'</div><h3>'+p.nom+'</h3><p>'+p.desc+'</p>';
+            const detailBtn=document.createElement('button');
+            detailBtn.type='button';
+            detailBtn.className='detail-btn';
+            detailBtn.textContent='Voir en détail';
+            detailBtn.onclick=function(e){ e.stopPropagation(); openDetailModal(p); };
+            card.appendChild(detailBtn);
+            c.appendChild(card);
         });
     }
     function filterGrid(cat,btn){
         document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.remove('active');});
         btn.classList.add('active');renderGrid(cat);
     }
+    let detailProduct=null;
+    function openDetailModal(p){
+        detailProduct=p;
+        document.getElementById('detail-icon').textContent=p.icon;
+        document.getElementById('detail-cat').textContent=p.cat;
+        document.getElementById('detail-title').textContent=p.nom;
+        document.getElementById('detail-desc').textContent=p.desc;
+        updateDetailSelectBtn();
+        document.getElementById('modal-detail').classList.add('open');
+    }
+    function closeDetailModal(){
+        document.getElementById('modal-detail').classList.remove('open');
+        detailProduct=null;
+    }
+    function updateDetailSelectBtn(){
+        if(!detailProduct)return;
+        const btn=document.getElementById('detail-select-btn');
+        btn.textContent=selection.has(detailProduct.nom)?'✓ Sélectionné — retirer':'Sélectionner ce produit';
+    }
+    function toggleFromModal(){
+        if(!detailProduct)return;
+        if(selection.has(detailProduct.nom))selection.delete(detailProduct.nom);
+        else selection.add(detailProduct.nom);
+        document.getElementById('badge').innerText=selection.size;
+        updateDetailSelectBtn();
+        renderGrid(activeCat);
+    }
+    document.getElementById('search-input').addEventListener('input',function(e){
+        searchQuery=e.target.value;
+        renderGrid(activeCat);
+    });
     function sendDevis(){
         const nom=document.getElementById('c_name').value.trim();
         const tel=document.getElementById('c_tel').value.trim();
