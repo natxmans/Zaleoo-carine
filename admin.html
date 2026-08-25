@@ -231,8 +231,9 @@ async function loadCatalogue(){
     var status = document.getElementById('load-status');
     status.textContent = 'Chargement du catalogue actuel depuis GitHub...';
     try{
-        var metaRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + FILE_PATH + '?ref=' + REPO_BRANCH, {
-            headers: {'Accept':'application/vnd.github.v3+json'}
+        var metaRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + FILE_PATH + '?ref=' + REPO_BRANCH + '&_=' + Date.now(), {
+            headers: {'Accept':'application/vnd.github.v3+json'},
+            cache: 'no-store'
         });
         if(!metaRes.ok) throw new Error('GitHub API: ' + metaRes.status);
         var meta = await metaRes.json();
@@ -371,8 +372,9 @@ async function publish(){
     msg.className = 'publish-msg';
     msg.textContent = 'Publication en cours...';
     try{
-        var metaRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + FILE_PATH + '?ref=' + REPO_BRANCH, {
-            headers: {'Accept':'application/vnd.github.v3+json', 'Authorization':'Bearer ' + token}
+        var metaRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + FILE_PATH + '?ref=' + REPO_BRANCH + '&_=' + Date.now(), {
+            headers: {'Accept':'application/vnd.github.v3+json', 'Authorization':'Bearer ' + token},
+            cache: 'no-store'
         });
         if(!metaRes.ok) throw new Error('Lecture GitHub: ' + metaRes.status + (metaRes.status===401?' (jeton invalide)':''));
         var meta = await metaRes.json();
@@ -393,6 +395,9 @@ async function publish(){
         });
         if(putRes.status === 403){
             throw new Error('403 : le jeton n\'a pas la permission Contents en Read and write sur ce depot. Clique sur "Changer le jeton GitHub" ci-dessous et recree-en un en suivant bien l\'etape 3.');
+        }
+        if(putRes.status === 409){
+            throw new Error('409 : le fichier a change entre-temps sur GitHub. Reclique simplement sur Publier, ca devrait passer.');
         }
         if(!putRes.ok){
             var errBody = {};
