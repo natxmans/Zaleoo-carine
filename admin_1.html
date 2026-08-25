@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Espace pro | Zaleoo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+    :root{
+        --blue:#293da4;--blue-dk:#1a2878;--sky:#5cbbf6;--bg:#f0f3f8;
+        --white:#ffffff;--text:#1c1f2e;--muted:#7a80a0;--border:#e2e7f2;
+        --sel-bg:#eef4ff;--sel-bd:#5cbbf6;
+        --new-accent:#c8622a;--new-bg:#fdf1e9;--new-border:#f0c7a8;
+        --shadow:0 4px 20px rgba(41,61,164,0.08);
+        --shadow-h:0 8px 32px rgba(41,61,164,0.16);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;}
+    h1,h2{font-family:'DM Serif Display',serif;font-weight:400;}
+
+    .bar{background:linear-gradient(135deg,var(--blue-dk) 0%,var(--blue) 60%,#3a52c4 100%);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+    .bar a{color:rgba(255,255,255,0.85);text-decoration:none;font-size:0.85rem;cursor:pointer;}
+    .bar a:hover{color:#fff;}
+    .bar h1{font-size:1.3rem;}
+    .bar .right{display:flex;align-items:center;gap:14px;}
+
+    .gate{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+    .gate-card{background:var(--white);border-radius:20px;box-shadow:var(--shadow);padding:36px 32px;max-width:360px;width:100%;text-align:center;}
+    .gate-card .icon{font-size:2.2rem;margin-bottom:8px;}
+    .gate-card h2{font-size:1.3rem;margin-bottom:6px;}
+    .gate-card p{color:var(--muted);font-size:0.88rem;margin-bottom:20px;}
+    .gate-card input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:0.95rem;margin-bottom:12px;font-family:inherit;}
+    .gate-card button{width:100%;padding:12px;border:none;border-radius:10px;background:var(--blue);color:#fff;font-weight:600;font-size:0.92rem;cursor:pointer;transition:background .15s ease;}
+    .gate-card button:hover{background:var(--blue-dk);}
+    .gate-error{color:#c0392b;font-size:0.82rem;margin-top:10px;min-height:1.2em;}
+
+    #app{display:none;}
+    .toolbar{max-width:1100px;margin:0 auto;padding:20px 24px 0;}
+    .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+    .stat{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:8px 16px;text-align:center;box-shadow:var(--shadow);}
+    .stat b{display:block;font-size:1.2rem;}
+    .stat span{font-size:0.7rem;color:var(--muted);}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+    .filter-btn{border:1px solid var(--border);background:var(--white);color:var(--text);padding:7px 14px;border-radius:999px;font-size:0.82rem;cursor:pointer;}
+    .filter-btn.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+    .banner-box{background:var(--new-bg);border:1px solid var(--new-border);color:var(--new-accent);border-radius:14px;padding:14px 18px;font-size:0.88rem;display:flex;gap:10px;margin-bottom:16px;}
+    .banner-box .txt{color:var(--text);opacity:0.92;}
+    main{max-width:1100px;margin:0 auto;padding:0 24px 100px;}
+    .cat-section{margin-bottom:30px;}
+    .cat-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+    .cat-head h2{font-size:1.1rem;}
+    .cat-head .count{margin-left:auto;font-size:0.76rem;color:var(--muted);}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+    .card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:box-shadow .15s ease,border-color .15s ease;}
+    .card:hover{box-shadow:var(--shadow-h);}
+    .card.checked{border-color:var(--sel-bd);background:var(--sel-bg);}
+    .card.isnew{border-color:var(--new-border);}
+    .card-top{display:flex;align-items:center;gap:8px;}
+    .card-name{font-weight:600;font-size:0.92rem;flex:1;}
+    .card-desc{font-size:0.8rem;color:var(--muted);line-height:1.4;}
+    .badge-new{align-self:flex-start;background:var(--new-bg);color:var(--new-accent);border:1px solid var(--new-border);font-size:0.64rem;font-weight:600;padding:2px 7px;border-radius:999px;text-transform:uppercase;}
+    .chk{width:18px;height:18px;accent-color:var(--blue);pointer-events:none;}
+
+    .publish-bar{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);padding:14px 24px;display:flex;justify-content:center;align-items:center;gap:16px;box-shadow:0 -4px 20px rgba(0,0,0,0.06);z-index:10;}
+    .publish-bar button{padding:12px 26px;border:none;border-radius:999px;background:var(--blue);color:#fff;font-weight:600;font-size:0.92rem;cursor:pointer;}
+    .publish-bar button:hover{background:var(--blue-dk);}
+    .publish-bar button:disabled{opacity:0.6;cursor:default;}
+    .publish-msg{font-size:0.82rem;color:var(--muted);}
+    .publish-msg.ok{color:#1e8a4c;}
+    .publish-msg.err{color:#c0392b;}
+
+    .token-modal-overlay{position:fixed;inset:0;background:rgba(20,25,50,0.55);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
+    .token-modal-overlay.open{display:flex;}
+    .token-modal{background:var(--white);border-radius:18px;padding:28px;max-width:440px;width:100%;}
+    .token-modal h3{font-size:1.1rem;margin-bottom:10px;}
+    .token-modal p{font-size:0.85rem;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+    .token-modal ol{font-size:0.83rem;color:var(--text);margin:0 0 14px 20px;line-height:1.7;}
+    .token-modal input{width:100%;padding:11px 13px;border:1px solid var(--border);border-radius:10px;font-size:0.9rem;margin-bottom:12px;font-family:monospace;}
+    .token-modal .row{display:flex;gap:10px;}
+    .token-modal button{flex:1;padding:11px;border:none;border-radius:10px;font-weight:600;font-size:0.88rem;cursor:pointer;}
+    .btn-primary{background:var(--blue);color:#fff;}
+    .btn-ghost{background:var(--border);color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="bar">
+    <h1>Espace pro — Zaleoo</h1>
+    <div class="right">
+        <a href="index.html">Retour au site</a>
+        <a id="logout-link" style="display:none;">Se déconnecter</a>
+    </div>
+</div>
+
+<div class="gate" id="gate">
+    <div class="gate-card">
+        <div class="icon">Accès</div>
+        <h2>Accès réservé</h2>
+        <p>Cette page permet de gérer les produits affichés sur le site. Entre le mot de passe pour continuer.</p>
+        <input type="password" id="pw-input" placeholder="Mot de passe">
+        <button id="login-btn">Se connecter</button>
+        <div class="gate-error" id="gate-error"></div>
+    </div>
+</div>
+
+<div id="app">
+    <div class="toolbar">
+        <div class="stats">
+            <div class="stat"><b id="stat-active">0</b><span>SUR LE SITE</span></div>
+            <div class="stat"><b id="stat-new">0</b><span>NOUVEAUX</span></div>
+            <div class="stat"><b id="stat-total">0</b><span>AU CATALOGUE</span></div>
+        </div>
+        <div class="filters" id="filters"></div>
+        <div id="banner-wrap"></div>
+        <div id="load-status" style="color:var(--muted);font-size:0.85rem;margin-bottom:10px;"></div>
+    </div>
+    <main id="main"></main>
+</div>
+
+<div class="publish-bar" id="publish-bar" style="display:none;">
+    <button id="publish-btn">Publier sur le site</button>
+    <span class="publish-msg" id="publish-msg"></span>
+    <a id="change-token-link" style="font-size:0.78rem;color:var(--muted);text-decoration:underline;cursor:pointer;">Changer le jeton GitHub</a>
+</div>
+
+<div class="token-modal-overlay" id="token-modal">
+    <div class="token-modal">
+        <h3>Connexion à GitHub</h3>
+        <p>Pour publier directement sur ton site, il faut un jeton d'accès GitHub (une seule fois, il reste enregistré dans ce navigateur).</p>
+        <ol>
+            <li>Va sur github.com puis clique sur ta photo de profil &gt; Settings &gt; tout en bas à gauche : Developer settings &gt; Personal access tokens &gt; Fine-grained tokens &gt; Generate new token</li>
+            <li>Dans "Repository access", choisis "Only select repositories" et sélectionne <b>natxmans/Zaleoo-carine</b></li>
+            <li>Dans "Permissions" &gt; "Repository permissions", trouve <b>Contents</b> et mets-le sur <b>Read and write</b> (c'est l'étape qu'on oublie souvent, et qui cause l'erreur "403 Resource not accessible")</li>
+            <li>Génère le jeton, copie-le (il commence par github_pat_) et colle-le ci-dessous</li>
+        </ol>
+        <input type="password" id="token-input" placeholder="github_pat_...">
+        <div class="row">
+            <button class="btn-ghost" id="token-cancel">Annuler</button>
+            <button class="btn-primary" id="token-save">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<script>
+var PASSWORD_SHA256 = "8d93d6e13603e9d7f1a7d61d89f3885c30e4ddb9481976adb49a1105e7647cf3";
+var NEW_PRODUCTS = [{"cat": "Receveurs", "nom": "MODERNA PN24", "desc": "Receveur extra-plat 40mm, enveloppe PMMA + panneaux bois/fibre de verre, PN24, découpable 250mm sur 3 côtés. Blanc ardoise. À partir de 402€.", "icon": "🛁"}, {"cat": "Receveurs", "nom": "Accessoires de receveurs", "desc": "Plots de calage (x4) et siphon extra-plat (débit 47L/min) pour receveurs Futura Néo / Moderna.", "icon": "🔩"}, {"cat": "Habillages", "nom": "Panneaux muraux SLIM R/L", "desc": "18mm d'épaisseur, finition fine et contemporaine. Découpables au millimètre, pose et entretien faciles.", "icon": "📏"}, {"cat": "Habillages", "nom": "Inserts SLIM R/L", "desc": "Bandes décoratives 18mm complétant la gamme Slim. Bois clair, marbre blanc, terrazzo. Pose par rainure-languette.", "icon": "🎗️"}, {"cat": "Habillages", "nom": "Panneaux de rattrapage", "desc": "Mousse XPS haute densité pour rattraper un mur, créer une structure ou un tablier de baignoire. Pose par collage.", "icon": "🧩"}, {"cat": "Habillages", "nom": "Pièces d'assemblage d'angles", "desc": "Raccords d'angle pour la pose des panneaux muraux (accessoire de montage).", "icon": "📐"}, {"cat": "Habillages", "nom": "Profilés de montage", "desc": "Profilés spécifiques par gamme (Carrelo, Ultra/Dalles, Design/Relief, Slim) pour une finition soignée des habillages.", "icon": "🪛"}, {"cat": "Parois", "nom": "Accessoires de parois vitrées", "desc": "Kit de fermeture magnétique KMC : étanchéité entre parois ou entre paroi et mur. Compatible toute la gamme.", "icon": "🧲"}, {"cat": "Accessoires de pose", "nom": "Colles & mastics", "desc": "MS Polymère (colle haute performance) et silicones sanitaires (blanc/translucide) pour la pose et les finitions.", "icon": "🧴"}, {"cat": "Accessoires de pose", "nom": "Seuil de rattrapage", "desc": "Barre de seuil striée pour rattraper un dénivelé de sol jusqu'à 11mm. Longueur 930mm.", "icon": "➖"}, {"cat": "Accessoires de pose", "nom": "Supports muraux robinetterie", "desc": "Supports/platines muraux (mâle et femelle) pour l'installation de la robinetterie derrière les panneaux muraux.", "icon": "🔧"}, {"cat": "Accessoires de pose", "nom": "Bande d'étanchéité", "desc": "Bande feutrée 12m x 12,5cm pour une étanchéification fiable et rapide.", "icon": "➰"}, {"cat": "Accessoires de pose", "nom": "Tuyau multicouche & pince à sertir", "desc": "Tuyau multicouche en couronne (diamètre 16mm) et pince à sertir PER/multicouche pour les raccordements.", "icon": "🪠"}, {"cat": "Plomberie", "nom": "Raccords et adaptateurs multicouche", "desc": "Gamme complète de raccords (droits, unions, coudes, tés, bouchons, adaptateurs cuivre) diamètre 16mm.", "icon": "🔗"}];
+var CATS = [["Receveurs", "🛁"], ["Habillages", "🎨"], ["Parois", "🚪"], ["Robinetterie", "🚿"], ["Sols", "🟫"], ["Ameublement", "🪞"], ["Sécurité", "🦺"], ["Accessoires de pose", "🧰"], ["Plomberie", "🔧"]];
+var REPO_OWNER = "natxmans";
+var REPO_NAME = "Zaleoo-carine";
+var REPO_BRANCH = "main";
+var FILE_PATH = "index.html";
+
+var PRODUCTS = [];
+var activeFilter = 'Tous';
+
+function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+}
+
+async function sha256Hex(text){
+    var enc = new TextEncoder().encode(text);
+    var buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+
+function showApp(){
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('logout-link').style.display = 'inline';
+    document.getElementById('publish-bar').style.display = 'flex';
+    loadCatalogue();
+}
+
+async function tryLogin(){
+    var val = document.getElementById('pw-input').value;
+    var hash = await sha256Hex(val);
+    if(hash === PASSWORD_SHA256){
+        sessionStorage.setItem('zaleoo_admin_ok', '1');
+        showApp();
+    } else {
+        document.getElementById('gate-error').textContent = 'Mot de passe incorrect.';
+    }
+}
+
+document.getElementById('login-btn').addEventListener('click', tryLogin);
+document.getElementById('pw-input').addEventListener('keydown', function(e){ if(e.key === 'Enter') tryLogin(); });
+document.getElementById('logout-link').addEventListener('click', function(e){
+    e.preventDefault();
+    sessionStorage.removeItem('zaleoo_admin_ok');
+    location.reload();
+});
+
+if(sessionStorage.getItem('zaleoo_admin_ok') === '1'){
+    showApp();
+}
+
+function parseCatalogueArray(html){
+    var startMarker = 'const catalogue=[';
+    var i = html.indexOf(startMarker);
+    if(i === -1) throw new Error("tableau catalogue introuvable dans index.html");
+    var arrStart = i + startMarker.length - 1;
+    var depth = 0, j = arrStart;
+    for(; j < html.length; j++){
+        if(html[j] === '[') depth++;
+        else if(html[j] === ']'){ depth--; if(depth === 0) break; }
+    }
+    var arrText = html.slice(arrStart, j + 1);
+    var items = (0, eval)('(' + arrText + ')');
+    return {items: items, fullStart: i, arrEnd: j + 1};
+}
+
+function decodeGitHubContent(meta){
+    var raw = meta.content.replace(/\n/g, '');
+    var binary = atob(raw);
+    var bytes = new Uint8Array(binary.length);
+    for(var k = 0; k < binary.length; k++) bytes[k] = binary.charCodeAt(k);
+    return new TextDecoder('utf-8').decode(bytes);
+}
+
+function encodeGitHubContent(str){
+    var bytes = new TextEncoder().encode(str);
+    var binary = '';
+    for(var k = 0; k < bytes.length; k++) binary += String.fromCharCode(bytes[k]);
+    return btoa(binary);
+}
+
+async function loadCatalogue(){
+    var status = document.getElementById('load-status');
+    status.textContent = 'Chargement du catalogue actuel depuis GitHub...';
+    try{
+        var metaRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + FILE_PATH + '?ref=' + REPO_BRANCH, {
+            headers: {'Accept':'application/vnd.github.v3+json'}
+        });
+        if(!metaRes.ok) throw new Error('GitHub API: ' + metaRes.status);
+        var meta = await metaRes.json();
+        var html = decodeGitHubContent(meta);
+        var parsed = parseCatalogueArray(html);
+        var existingNames = {};
+        parsed.items.forEach(function(p){ existingNames[p.nom] = true; });
+        PRODUCTS = parsed.items.map(function(p, idx){
+            return {id:'e'+idx, cat:p.cat, nom:p.nom, desc:p.desc, icon:p.icon, checked:true, isNew:false};
+        });
+        NEW_PRODUCTS.forEach(function(p, idx){
+            if(!existingNames[p.nom]){
+                PRODUCTS.push({id:'n'+idx, cat:p.cat, nom:p.nom, desc:p.desc, icon:p.icon, checked:false, isNew:true});
+            }
+        });
+        status.textContent = '';
+        renderAll();
+    }catch(err){
+        status.textContent = 'Impossible de charger le catalogue actuel (' + err.message + ').';
+        console.error(err);
+    }
+}
+
+function counts(){
+    var active = PRODUCTS.filter(function(p){ return p.checked; }).length;
+    var news = PRODUCTS.filter(function(p){ return p.isNew; }).length;
+    return {active: active, news: news, total: PRODUCTS.length};
+}
+
+function renderFilters(){
+    var el = document.getElementById('filters');
+    var cats = ['Tous'].concat(CATS.map(function(c){ return c[0]; }));
+    el.innerHTML = cats.map(function(c){
+        var n = c === 'Tous' ? PRODUCTS.length : PRODUCTS.filter(function(p){ return p.cat === c; }).length;
+        if(n === 0 && c !== 'Tous') return '';
+        return '<button class="filter-btn' + (c===activeFilter?' active':'') + '" data-cat="' + escapeHtml(c) + '">' + escapeHtml(c) + ' (' + n + ')</button>';
+    }).join('');
+    el.querySelectorAll('.filter-btn').forEach(function(b){
+        b.addEventListener('click', function(){ activeFilter = b.dataset.cat; renderAll(); });
+    });
+}
+
+function renderBanner(){
+    var wrap = document.getElementById('banner-wrap');
+    var n = PRODUCTS.filter(function(p){ return p.isNew; }).length;
+    if(n === 0){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML = '<div class="banner-box"><div class="txt"><b>' + n + ' nouveaux produits</b> repérés dans le catalogue Zaleoo qui ne sont pas encore sur ton site. Coche ceux que tu veux ajouter, puis clique sur Publier.</div></div>';
+}
+
+function renderStats(){
+    var c = counts();
+    document.getElementById('stat-active').textContent = c.active;
+    document.getElementById('stat-new').textContent = c.news;
+    document.getElementById('stat-total').textContent = c.total;
+}
+
+function cardHtml(p){
+    var cls = 'card' + (p.checked?' checked':'') + (p.isNew?' isnew':'');
+    var badge = p.isNew ? '<span class="badge-new">Nouveau</span>' : '';
+    return '<div class="' + cls + '" data-id="' + p.id + '">' +
+        '<div class="card-top"><input type="checkbox" class="chk" ' + (p.checked?'checked':'') + '><span>' + p.icon + '</span><span class="card-name">' + escapeHtml(p.nom) + '</span></div>' +
+        badge +
+        '<div class="card-desc">' + escapeHtml(p.desc) + '</div></div>';
+}
+
+function renderMain(){
+    var main = document.getElementById('main');
+    if(PRODUCTS.length === 0){ main.innerHTML = ''; return; }
+    var cats = activeFilter === 'Tous' ? CATS.map(function(c){ return c[0]; }) : [activeFilter];
+    var html = '';
+    cats.forEach(function(catName){
+        var meta = CATS.filter(function(c){ return c[0] === catName; })[0];
+        var items = PRODUCTS.filter(function(p){ return p.cat === catName; });
+        if(items.length === 0) return;
+        html += '<section class="cat-section"><div class="cat-head"><span>' + (meta?meta[1]:'') + '</span><h2>' + escapeHtml(catName) + '</h2>' +
+            '<span class="count">' + items.filter(function(p){return p.checked;}).length + '/' + items.length + ' sur le site</span></div>' +
+            '<div class="grid">' + items.map(cardHtml).join('') + '</div></section>';
+    });
+    main.innerHTML = html;
+    main.querySelectorAll('.card').forEach(function(card){
+        card.addEventListener('click', function(){ toggle(card.dataset.id); });
+    });
+}
+
+function toggle(id){
+    var p = PRODUCTS.filter(function(x){ return x.id === id; })[0];
+    if(!p) return;
+    p.checked = !p.checked;
+    renderAll();
+}
+
+function renderAll(){
+    renderFilters();
+    renderBanner();
+    renderStats();
+    renderMain();
+}
+
+function jsStringLiteral(s){
+    var esc = String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    return "'" + esc + "'";
+}
+
+function buildCatalogueArrayText(){
+    var active = PRODUCTS.filter(function(p){ return p.checked; });
+    return active.map(function(p){
+        return '{cat:' + jsStringLiteral(p.cat) + ',nom:' + jsStringLiteral(p.nom) + ',desc:' + jsStringLiteral(p.desc) + ',icon:' + jsStringLiteral(p.icon) + '},';
+    }).join('\n        ');
+}
+
+function getToken(){ return localStorage.getItem('zaleoo_admin_gh_token') || ''; }
+function openTokenModal(){ document.getElementById('token-modal').classList.add('open'); }
+function closeTokenModal(){ document.getElementById('token-modal').classList.remove('open'); }
+
+document.getElementById('token-cancel').addEventListener('click', closeTokenModal);
+document.getElementById('token-save').addEventListener('click', function(){
+    var t = document.getElementById('token-input').value.trim();
+    if(!t) return;
+    localStorage.setItem('zaleoo_admin_gh_token', t);
+    closeTokenModal();
+    publish();
+});
+document.getElementById('publish-btn').addEventListener('click', publish);
+document.getElementById('change-token-link').addEventListener('click', function(){
+    localStorage.removeItem('zaleoo_admin_gh_token');
+    document.getElementById('token-input').value = '';
+    openTokenModal();
+});
+
+async function publish(){
+    var msg = document.getElementById('publish-msg');
+    var btn = document.getElementById('publish-btn');
+    var token = getToken();
+    if(!token){ openTokenModal(); return; }
+    btn.disabled = true;
+    msg.className = 'publish-msg';
+    msg.textContent = 'Publication en cours...';
+    try{
+        var metaRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + FILE_PATH + '?ref=' + REPO_BRANCH, {
+            headers: {'Accept':'application/vnd.github.v3+json', 'Authorization':'Bearer ' + token}
+        });
+        if(!metaRes.ok) throw new Error('Lecture GitHub: ' + metaRes.status + (metaRes.status===401?' (jeton invalide)':''));
+        var meta = await metaRes.json();
+        var html = decodeGitHubContent(meta);
+        var parsed = parseCatalogueArray(html);
+        var newArrText = 'const catalogue=[\n        ' + buildCatalogueArrayText() + '\n    ]';
+        var newHtml = html.slice(0, parsed.fullStart) + newArrText + html.slice(parsed.arrEnd);
+        var b64 = encodeGitHubContent(newHtml);
+        var putRes = await fetch('https://api.github.com/repos/' + REPO_OWNER + '/' + REPO_NAME + '/contents/' + FILE_PATH, {
+            method: 'PUT',
+            headers: {'Accept':'application/vnd.github.v3+json', 'Authorization':'Bearer ' + token, 'Content-Type':'application/json'},
+            body: JSON.stringify({
+                message: 'Mise a jour du catalogue produits (espace pro)',
+                content: b64,
+                sha: meta.sha,
+                branch: REPO_BRANCH
+            })
+        });
+        if(putRes.status === 403){
+            throw new Error('403 : le jeton n\'a pas la permission Contents en Read and write sur ce depot. Clique sur "Changer le jeton GitHub" ci-dessous et recree-en un en suivant bien l\'etape 3.');
+        }
+        if(!putRes.ok){
+            var errBody = {};
+            try{ errBody = await putRes.json(); }catch(e){}
+            throw new Error('Publication: ' + putRes.status + ' ' + (errBody.message || ''));
+        }
+        msg.className = 'publish-msg ok';
+        msg.textContent = 'Publie sur le site !';
+        PRODUCTS.forEach(function(p){ if(p.isNew && p.checked) p.isNew = false; });
+        renderAll();
+    }catch(err){
+        msg.className = 'publish-msg err';
+        msg.textContent = String(err.message || err);
+        console.error(err);
+    }finally{
+        btn.disabled = false;
+    }
+}
+</script>
+</body>
+</html>
