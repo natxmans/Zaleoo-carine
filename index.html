@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>C-SAM | Configurateur Showertec 2025</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
     <style>
@@ -394,6 +397,34 @@
     document.getElementById('badge').innerText=selection.size;
     updateSelectionLink();
     renderGrid();
+    let freshCheckInFlight=false;
+    function checkForFreshCatalogue(){
+        if(freshCheckInFlight)return;
+        const nameVal=(document.getElementById('c_name')||{}).value||'';
+        const telVal=(document.getElementById('c_tel')||{}).value||'';
+        const adrVal=(document.getElementById('c_adresse')||{}).value||'';
+        if(nameVal||telVal||adrVal)return;
+        freshCheckInFlight=true;
+        try{
+            fetch(location.pathname,{cache:'no-store'}).then(function(resp){
+                if(!resp.ok)throw new Error('bad status');
+                return resp.text();
+            }).then(function(html){
+                const liveMatch=html.match(/const catalogue=(\[[\s\S]*?\]);/);
+                const currentScript=document.querySelector('script');
+                const currentMatch=currentScript?currentScript.textContent.match(/const catalogue=(\[[\s\S]*?\]);/):null;
+                if(liveMatch&&currentMatch&&liveMatch[1]!==currentMatch[1]){
+                    location.reload();
+                }
+            }).catch(function(){}).finally(function(){
+                freshCheckInFlight=false;
+            });
+        }catch(e){
+            freshCheckInFlight=false;
+        }
+    }
+    checkForFreshCatalogue();
+    setInterval(checkForFreshCatalogue,45000);
 </script>
 </body>
 </html>
