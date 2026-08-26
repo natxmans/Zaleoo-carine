@@ -49,7 +49,8 @@
         .selection-list{max-height:320px;overflow-y:auto;margin:16px 0;}
         .sel-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);}
         .sel-row:last-child{border-bottom:none;}
-        .sel-icon{font-size:1.3rem;flex-shrink:0;}
+        .sel-icon{font-size:1.3rem;flex-shrink:0;width:32px;height:32px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+        .sel-icon img{width:100%;height:100%;object-fit:cover;}
         .sel-name{flex:1;font-size:0.85rem;color:var(--text);text-align:left;}
         .sel-remove{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:4px 10px;border-radius:50%;transition:all 0.15s;}
         .sel-remove:hover{background:#fdecec;color:#d33;}
@@ -62,7 +63,8 @@
         .card:hover{box-shadow:var(--shadow-h);transform:translateY(-2px);}
         .card.selected{border-color:var(--sel-bd);background:var(--sel-bg);box-shadow:0 6px 24px rgba(92,187,246,0.25);transform:translateY(-2px);}
         .card.selected::after{content:'✓';position:absolute;top:10px;right:12px;width:22px;height:22px;background:var(--sky);color:white;border-radius:50%;font-size:0.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:22px;}
-        .icon-box{font-size:36px;margin-bottom:12px;background:var(--bg);border-radius:12px;padding:12px;display:inline-block;transition:transform 0.2s;}
+        .icon-box{font-size:36px;margin-bottom:12px;background:var(--bg);border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;transition:transform 0.2s;width:100%;height:100px;overflow:hidden;box-sizing:border-box;}
+        .icon-box img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
         .card:hover .icon-box{transform:scale(1.08);}
         .card-cat{font-size:0.65rem;color:var(--sky);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
         .card h3{font-size:0.88rem;font-weight:600;color:var(--blue);margin-bottom:6px;min-height:36px;display:flex;align-items:center;justify-content:center;line-height:1.3;}
@@ -94,7 +96,8 @@
         .modal-box{background:white;border-radius:24px;padding:32px 28px;max-width:430px;width:92%;box-shadow:0 24px 80px rgba(0,0,0,0.18);animation:popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);}
         @keyframes popIn{from{transform:scale(0.82) translateY(12px);opacity:0;}to{transform:scale(1) translateY(0);opacity:1;}}
         .modal-header{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
-        .modal-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--blue),#3a52c4);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+        .modal-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--blue),#3a52c4);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;overflow:hidden;}
+        .modal-icon img{width:100%;height:100%;object-fit:cover;}
         .modal-title{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--blue);}
         .modal-step{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;}
         .step-num{background:linear-gradient(135deg,var(--blue),#3a52c4);color:white;border-radius:10px;width:30px;height:30px;min-width:30px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.82rem;}
@@ -237,6 +240,28 @@
         {cat:'Sécurité',nom:'Siège Éco avec accoudoirs',desc:'Pliable avec accoudoirs pour faciliter les transferts. Coussin d\'assise et dossier démontables.',icon:'🦽'},
         {cat:'Sécurité',nom:'Tabouret de douche',desc:'Acier inoxydable, assise antidérapante, léger et facile à déplacer. Blanc.',icon:'🪑'},
     ];
+    const categoryImages={
+        'Receveurs':'https://www.zaleoo.com/storage/2024/08/A1_6792-300x300.jpg',
+        'Habillages':'https://www.zaleoo.com/storage/2024/09/tk7k9XQh-300x300.jpeg',
+        'Parois':'https://www.zaleoo.com/storage/2024/09/Show-room-2-scaled-e1727084055284-300x300.jpg',
+        'Robinetterie':'https://www.zaleoo.com/storage/2024/09/A1_6624-1-300x300.jpg',
+        'Sols':'https://www.zaleoo.com/storage/2024/09/A1_6786-300x300.jpg',
+        'Ameublement':'https://www.zaleoo.com/storage/2024/09/A1_6583-1-300x300.jpg',
+        'Sécurité':'https://www.zaleoo.com/storage/2024/09/A1_6645-300x300.jpg'
+    };
+    function fillIconBox(box,p){
+        const url=categoryImages[p.cat];
+        if(url){
+            const img=document.createElement('img');
+            img.src=url;
+            img.alt=p.cat;
+            img.loading='lazy';
+            img.onerror=function(){ box.innerHTML=''; box.textContent=p.icon; };
+            box.appendChild(img);
+        }else{
+            box.textContent=p.icon;
+        }
+    }
     let selection=new Set();
     let activeCat='Tous';
     let searchQuery='';
@@ -274,7 +299,8 @@
                 saveSelection();
                 updateSelectionLink();
             };
-            card.innerHTML='<div class="icon-box">'+p.icon+'</div><div class="card-cat">'+p.cat+'</div><h3>'+p.nom+'</h3><p>'+p.desc+'</p>';
+            card.innerHTML='<div class="icon-box"></div><div class="card-cat">'+p.cat+'</div><h3>'+p.nom+'</h3><p>'+p.desc+'</p>';
+            fillIconBox(card.querySelector('.icon-box'),p);
             const detailBtn=document.createElement('button');
             detailBtn.type='button';
             detailBtn.className='detail-btn';
@@ -291,7 +317,9 @@
     let detailProduct=null;
     function openDetailModal(p){
         detailProduct=p;
-        document.getElementById('detail-icon').textContent=p.icon;
+        const detailIconBox=document.getElementById('detail-icon');
+        detailIconBox.innerHTML='';
+        fillIconBox(detailIconBox,p);
         document.getElementById('detail-cat').textContent=p.cat;
         document.getElementById('detail-title').textContent=p.nom;
         document.getElementById('detail-desc').textContent=p.desc;
@@ -352,7 +380,7 @@
             row.className='sel-row';
             const iconSpan=document.createElement('span');
             iconSpan.className='sel-icon';
-            iconSpan.textContent=p?p.icon:'📦';
+            if(p){ fillIconBox(iconSpan,p); }else{ iconSpan.textContent='📦'; }
             const nameSpan=document.createElement('span');
             nameSpan.className='sel-name';
             nameSpan.textContent=nom;
